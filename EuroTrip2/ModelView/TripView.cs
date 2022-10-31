@@ -23,6 +23,8 @@ namespace EuroTrip2.ModelView
         */
 
         //flightname has been deleted and trip id also
+
+        public int Id { get; set; }
         public string airlines { get; set; }
         public string planeNo { get; set; }
         public string Name { get; set; }

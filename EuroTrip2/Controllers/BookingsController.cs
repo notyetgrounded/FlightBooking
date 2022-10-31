@@ -38,7 +38,6 @@ namespace EuroTrip2.Controllers
             {
                 return NotFound();
             }
-
             return booking;
         }
 

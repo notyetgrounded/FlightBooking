@@ -7,7 +7,6 @@ namespace EuroTrip2.Models
 {
     public class Booking
     {
-        //public Passenger[] passengers {get;set;}
         public int Id { get; set; }
         public string PassengerName { get; set; }
         public int PassengerAge { get; set; }

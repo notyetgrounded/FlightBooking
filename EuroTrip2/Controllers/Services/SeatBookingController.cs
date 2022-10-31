@@ -8,18 +8,18 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EuroTrip2.Controllers.Services
 {
-    [Route("api/[controller]")]
+    [Route("api/[controller]/[action]")]
     [ApiController]
     public class SeatBookingController : ControllerBase
     {
         protected readonly FlightDBContext _context;
-
         public SeatBookingController(FlightDBContext context)
         {
             _context=context;
         }
         [HttpPost]
-        public ActionResult<HttpResponseMessage> BookSeats(MakeBookingView makeBooking)
+
+        public ActionResult<int> BookSeats(MakeBookingView makeBooking)
         {           
             if (makeBooking.Email == null){ return BadRequest(); }
             var user =_context.Users.Where(x=>x.Email==makeBooking.Email).FirstOrDefault();
@@ -35,7 +35,7 @@ namespace EuroTrip2.Controllers.Services
             var passengers = makeBooking.Passengers;
             if (trip==null || passengers.Count() > trip.PassengerCount) { return BadRequest(); }
             var freeseats = GetFreeSeats(makeBooking.TripId, passengers.Count());
-            if (freeseats.Count() == 0) {  return BadRequest(); }
+            if (freeseats.Count() == 0) {  return BadRequest(freeseats.Count()+"seats left"); }
             int id;
             if (_context.Bookings.Any())
             {
@@ -63,7 +63,7 @@ namespace EuroTrip2.Controllers.Services
                 _context.SaveChanges();
 
             }
-            return Ok(id);
+            return id;
         }
         [NonAction]
         public List<int> GetFreeSeats(int trip_Id,int count)

@@ -2,13 +2,8 @@
 using EuroTrip2.Models;
 using EuroTrip2.ModelView;
 using EuroTrip2.Options;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
-using NuGet.Configuration;
-using NuGet.Protocol;
-using System.Collections.Immutable;
 using System.Data;
 
 namespace EuroTrip2.Controllers.Services
@@ -96,6 +91,7 @@ namespace EuroTrip2.Controllers.Services
             new one*/
 
             var result = trip.Flight.Name.Split(' ');
+            tripView.Id = trip.Id;
             tripView.airlines = result[0];
             tripView.planeNo = result[1];
             tripView.Source = trip.TripRoute.Source.Name;
@@ -116,14 +112,11 @@ namespace EuroTrip2.Controllers.Services
             tripView.stops = 0;
             tripView.SeatCount = trip.PassengerCount;
             return tripView;
-
-
         }
 
-
-
         [HttpGet]
-        public ActionResult<IEnumerable<BookingsView>> GetMyBookings(string email)
+        [Route("{email}")]
+        public ActionResult<IEnumerable<BookingsView>> GetMyBookings([FromRoute]string email)
         {
             
             var userQueary=_context.Users.Where(x=>x.Email==email);
@@ -131,8 +124,7 @@ namespace EuroTrip2.Controllers.Services
             {
                 return NotFound();
             }
-            var user = userQueary.Include(x => x.Bookings).ThenInclude(x => x.Trip).ThenInclude(x => x.TripRoute).First();
-            
+            var user = userQueary.Include(x => x.Bookings).ThenInclude(x => x.Trip).ThenInclude(x => x.TripRoute).First();           
             
             
             if (user.Bookings==null)
@@ -150,7 +142,7 @@ namespace EuroTrip2.Controllers.Services
                     PassengerName = record.PassengerName,
                     PassengerAge = record.PassengerAge,
                     PassengerGender = record.PassengerGender,
-                    DateTime = record.DateTime,
+                    DateTime = record.DateTime.ToString("dd MMM yyyy"),
                     TripId = (int)record.Trip_Id,
                     TripName = record.Trip.Name,
                     Source = GetLocation(record.Trip.TripRoute.Source_Id),
