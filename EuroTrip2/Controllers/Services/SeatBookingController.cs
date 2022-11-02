@@ -7,7 +7,7 @@ using System.Security.Policy;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
 using Microsoft.JSInterop;
-
+using EuroTrip2.BussinessLayer;
 
 namespace EuroTrip2.Controllers.Services
 {
@@ -17,11 +17,12 @@ namespace EuroTrip2.Controllers.Services
     public class SeatBookingController : ControllerBase
     {
         protected readonly FlightDBContext _context;
-
-        public SeatBookingController(FlightDBContext context)
+        protected readonly IBookingInterface _bookingRepository;
+        public SeatBookingController(IBookingInterface bookingRepository) 
         {
-            _context = context;
+            _bookingRepository = bookingRepository;
         }
+
         [HttpPost]
 
         public async Task<ActionResult<HttpResponseMessage>> BookSeats(MakeBookingView makeBooking)
@@ -30,96 +31,35 @@ namespace EuroTrip2.Controllers.Services
             {
                 return BadRequest(ModelState);
             }
-            User user = _context.Users.Where(x => x.Email == makeBooking.Email).FirstOrDefault();
-            if(user==null)
+            if (_bookingRepository.BookSeats(makeBooking).Result)
             {
-                user = new User()
-                {
-                    Email = makeBooking.Email,
-                    Name = makeBooking.Name
-                };
-                _context.Users.Add(user);
-                _context.SaveChanges();
+                _bookingRepository
+                return Ok();
             }
-            List<Passenger> passengers = new List<Passenger>();
-            foreach (var passenger in makeBooking.Passengers)
-            {
-                passengers.Add(passenger);
-                _context.Passengers.Add(passengers.Last());
-            }
-            _context.SaveChanges();
-
-            Booking PreviousBooking = null;
-
-            foreach (var tripId in makeBooking.TripIds)
-            {
-                var FreeSeats = GetFreeSeats(tripId, makeBooking.Passengers.Count());
-                var ij = FreeSeats.Count();
-                if (FreeSeats.Count() < makeBooking.Passengers.Count()) { return NotFound("here"+ij); }
-                Trip trip = _context.Trips.Include(x => x.SeatStatuses).Where(x => x.Id == tripId).FirstOrDefault();
-                Booking booking = new Booking();
-
-                booking.TotalPrice = trip.Price * makeBooking.Passengers.Count();
-                booking.Name = makeBooking.Name;
-                booking.Email = makeBooking.Email;
-                booking.PhoneNo = makeBooking.PhoneNo;
-                booking.User_Id = user.Id;
-                booking.Trip_Id = tripId;
-
-                _context.Bookings.Add(booking);
-                _context.SaveChanges();
-                if (PreviousBooking != null)
-                {
-                    PreviousBooking.NextBooking_Id = booking.Id;
-                }
-                PreviousBooking = booking;
-                for (int i = 0; i < FreeSeats.Count(); i++)
-                {
-                    makeTicket(seat_Id: FreeSeats[i], booking_Id: booking.Id, passenger_id: passengers[i].Id, price: trip.Price);
-
-                    trip.PassengerCount--;
-                    trip.SeatStatuses.Where(x => x.Seat_Id == FreeSeats[i]).FirstOrDefault().IsFree = false;
-
-                }
-            }
-            await _context.SaveChangesAsync();
-            return Ok();
+            ModelState.AddModelError("Internal_Error", "Somthing Went Wrong Please Try again");
+            return BadRequest(ModelState);
 
         }
-        [NonAction]
-        public bool makeTicket(int seat_Id, int booking_Id, int passenger_id, int price)
-        {
-            Ticket ticket = new Ticket();
-            ticket.Status = (int)Options.BookingStatus.Booked;
-            ticket.Seat_Id = seat_Id;
-            ticket.Price = price;
-            ticket.Booking_Id = booking_Id;
-            ticket.Passenger_Id = passenger_id;
-            _context.Tickets.Add(ticket);
-            _context.SaveChanges();
 
-            return true;
-        }
         [HttpDelete]
         [Route("{booking_Id}")]
         public async Task<ActionResult<HttpResponseMessage>> CancelBookings([FromRoute]int booking_Id)
         {
 
-            var booking = _context.Bookings.Include(x => x.Trip).ThenInclude(x => x.SeatStatuses).Include(x => x.Tickets).Where(x => x.Id == booking_Id).FirstOrDefault();
-            if(booking == null)
+            if(!_bookingRepository.BookingExists(booking_Id).Result)
             {
-                return BadRequest("that booking id does not exist ");
+                return BadRequest("booking Doesnot Exsist ");
             }
 
-            foreach (var ticket in booking.Tickets)
+            if (_bookingRepository.CancelBookings(booking_Id).Result)
             {
-                ticket.Status = (int)Options.BookingStatus.Cancelled;
-                booking.Trip.PassengerCount++;
-                booking.Trip.SeatStatuses.Where(x => x.Seat_Id == ticket.Seat_Id).FirstOrDefault().IsFree = true;
 
+                return Ok();
             }
-            await _context.SaveChangesAsync();
-            return Ok();
+            else
+            {
+                return BadRequest("Somthing Went Wrong");
+            }
         }
         [HttpPut]
         public async Task<ActionResult<HttpResponseMessage>> UpdatePassengers(List<Passenger> passengers)
@@ -128,9 +68,15 @@ namespace EuroTrip2.Controllers.Services
             {
                 return BadRequest(ModelState);
             }
-            _context.Passengers.UpdateRange(passengers);
-            await _context.SaveChangesAsync();
-            return Ok("Updated passengers");
+           if(_bookingRepository.UpdatePassengers(passengers).Result)
+            {
+                return Ok("Successfully Updated Passengers");
+            }
+           else
+            {
+                return BadRequest("Somthing Went Wrong");
+            }
+
         }
         //[HttpPut]
         //public async Task<ActionResult<HttpResponseMessage>> UpdatePassenger(Passenger passenger)
@@ -140,11 +86,6 @@ namespace EuroTrip2.Controllers.Services
         //    return Ok("Updated passenger");
         //}
 
-        [NonAction]
-        public List<int> GetFreeSeats(int trip_Id, int count)
-        {
-            var seatsIds = _context.SeatStatuses.Where(x => x.Trip_Id == trip_Id && x.IsFree == true).Select(x => x.Seat_Id).Take(count).ToList();
-            return seatsIds;
-        }
+
     }
 }

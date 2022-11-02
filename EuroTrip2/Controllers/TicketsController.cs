@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using EuroTrip2.Contexts;
 using EuroTrip2.Models;
 
-namespace EuroTrip2.Controllers.Services
+namespace EuroTrip2.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
