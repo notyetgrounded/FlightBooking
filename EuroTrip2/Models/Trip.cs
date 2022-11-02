@@ -10,7 +10,7 @@ namespace EuroTrip2.Models
     {
         [Key]
         public int Id { get; set; }
-        public string Name { get; set; }
+        public string RouteName { get; set; }
         public DateTime SourceTime { get; set; }
         public DateTime DestinationTime { get; set; }
         public int PassengerCount { get; set; }

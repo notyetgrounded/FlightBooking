@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using EuroTrip2.Contexts;
 using EuroTrip2.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace EuroTrip2.Controllers
 {
@@ -23,44 +19,50 @@ namespace EuroTrip2.Controllers
 
         // GET: api/Flights
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Flight>>> GetFlights()
+        public async Task<IActionResult> GetAllFlights()
         {
-            return await _context.Flights.ToListAsync();
+            var flights = await _context.Flights.ToListAsync();
+
+            return Ok(flights);
         }
 
         // GET: api/Flights/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Flight>> GetFlight(int id)
+        [HttpGet]
+        [Route("{flightId:int}")]
+        public async Task<IActionResult> GetFlight([FromRoute] int flightId)
         {
-            var flight = await _context.Flights.FindAsync(id);
+            var flight = await _context.Flights.FirstOrDefaultAsync(x => x.flightId == flightId);
 
             if (flight == null)
             {
                 return NotFound();
             }
 
-            return flight;
+            return Ok(flight);
         }
 
         // PUT: api/Flights/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutFlight(int id, Flight flight)
+        [HttpPut]
+        [Route("{flightId:int}")]
+        public async Task<IActionResult> UpdateFlight([FromRoute] int flightId, Flight updateFlightRequest)
         {
-            if (id != flight.Id)
+            var flight = await _context.Flights.FindAsync(flightId);
+
+            if (flight == null || flightId != flight.flightId)
             {
-                return BadRequest();
+                return NotFound();
             }
-
-            _context.Entry(flight).State = EntityState.Modified;
-
+            flight.flightName = updateFlightRequest.flightName;
+            flight.seatCount = updateFlightRequest.seatCount;
             try
             {
                 await _context.SaveChangesAsync();
+
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!FlightExists(id))
+                if (!FlightExists(flightId))
                 {
                     return NotFound();
                 }
@@ -69,54 +71,57 @@ namespace EuroTrip2.Controllers
                     throw;
                 }
             }
-
-            return NoContent();
+            return Ok(flight);
         }
 
         // POST: api/Flights
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
 
         [HttpPost]
-        public async Task<ActionResult<Flight>> PostFlight(Flight flight)
+        public async Task<IActionResult> AddFlight([FromBody] Flight flightRequest)
         {
-            _context.Flights.Add(flight);
-            await _context.SaveChangesAsync();
-            int id= flight.Id;
+            await _context.Flights.AddAsync(flightRequest);
+            _context.SaveChanges();
+            int id = flightRequest.flightId;
             char letter = 'A';
-            for (int i = 0; i < flight.SeatCount / 5; i++)
+            for (int i = 0; i < flightRequest.seatCount / 5; i++)
             {
                 for (int j = 0; j < 5; j++)
                 {
                     var seat = new Seat();
-                    seat.Name=j.ToString() + letter;
-                    seat.Flight_Id = flight.Id;
+                    seat.Name = j.ToString() + letter;
+                    seat.Flight_Id = flightRequest.flightId;
                     _context.Add(seat);
                 }
                 letter++;
             }
             await _context.SaveChangesAsync();
-            return CreatedAtAction("GetFlight", new { id = flight.Id }, flight);
+            //return Ok(flightRequest);
+            return CreatedAtAction("GetAllFlights", new { id = flightRequest.flightId }, flightRequest);
         }
 
         // DELETE: api/Flights/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteFlight(int id)
+        [HttpDelete]
+        [Route("{flightId:int}")]
+        public async Task<IActionResult> DeleteFlight([FromRoute] int flightId)
         {
-            var flight = await _context.Flights.FindAsync(id);
+            var flight = await _context.Flights.FindAsync(flightId);
+
             if (flight == null)
             {
                 return NotFound();
             }
-
             _context.Flights.Remove(flight);
+
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return Ok(flight);
         }
 
         private bool FlightExists(int id)
         {
-            return _context.Flights.Any(e => e.Id == id);
+            return _context.Flights.Any(e => e.flightId == id);
         }
     }
 }
+

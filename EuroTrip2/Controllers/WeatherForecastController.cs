@@ -1,7 +1,9 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EuroTrip2.Controllers
 {
+    [Authorize]
     [ApiController]
     //[Route("[controller]")]
     [Route("api/[controller]")]

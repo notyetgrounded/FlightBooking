@@ -8,10 +8,10 @@ namespace EuroTrip2.Models
     public class Flight
     {
         [Key]
-        
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public int SeatCount { get; set; }
+
+        public int flightId { get; set; }
+        public string flightName { get; set; }
+        public int seatCount { get; set; }
 
         //public int Price { get; set; }
 
@@ -20,6 +20,6 @@ namespace EuroTrip2.Models
 
         public ICollection<Trip>? Trips { get; set; }
 
-        
+
     }
 }

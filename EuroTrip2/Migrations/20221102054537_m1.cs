@@ -10,17 +10,32 @@ namespace EuroTrip2.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "Flights",
+                name: "Admins",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    SeatCount = table.Column<int>(type: "int", nullable: false)
+                    Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    AdminPassword = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Flights", x => x.Id);
+                    table.PrimaryKey("PK_Admins", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Flights",
+                columns: table => new
+                {
+                    flightId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    flightName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    seatCount = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Flights", x => x.flightId);
                 });
 
             migrationBuilder.CreateTable(
@@ -53,6 +68,21 @@ namespace EuroTrip2.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Registrations",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    EmailID = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Password = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Registrations", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Users",
                 columns: table => new
                 {
@@ -82,7 +112,7 @@ namespace EuroTrip2.Migrations
                         name: "FK_Seats_Flights_Flight_Id",
                         column: x => x.Flight_Id,
                         principalTable: "Flights",
-                        principalColumn: "Id");
+                        principalColumn: "flightId");
                 });
 
             migrationBuilder.CreateTable(
@@ -116,7 +146,7 @@ namespace EuroTrip2.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    RouteName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     SourceTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     DestinationTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     PassengerCount = table.Column<int>(type: "int", nullable: false),
@@ -131,7 +161,7 @@ namespace EuroTrip2.Migrations
                         name: "FK_Trips_Flights_Flight_Id",
                         column: x => x.Flight_Id,
                         principalTable: "Flights",
-                        principalColumn: "Id",
+                        principalColumn: "flightId",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_Trips_TripRoutes_TripRoute_Id",
@@ -301,6 +331,12 @@ namespace EuroTrip2.Migrations
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "Admins");
+
+            migrationBuilder.DropTable(
+                name: "Registrations");
+
             migrationBuilder.DropTable(
                 name: "SeatStatuses");
 

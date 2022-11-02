@@ -22,6 +22,31 @@ namespace EuroTrip2.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder, 1L, 1);
 
+            modelBuilder.Entity("EuroTrip2.Models.Admin", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<string>("AdminPassword")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Admins");
+                });
+
             modelBuilder.Entity("EuroTrip2.Models.Booking", b =>
                 {
                     b.Property<int>("Id")
@@ -72,20 +97,20 @@ namespace EuroTrip2.Migrations
 
             modelBuilder.Entity("EuroTrip2.Models.Flight", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("flightId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("flightId"), 1L, 1);
 
-                    b.Property<string>("Name")
+                    b.Property<string>("flightName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("SeatCount")
+                    b.Property<int>("seatCount")
                         .HasColumnType("int");
 
-                    b.HasKey("Id");
+                    b.HasKey("flightId");
 
                     b.ToTable("Flights");
                 });
@@ -132,6 +157,31 @@ namespace EuroTrip2.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Places");
+                });
+
+            modelBuilder.Entity("EuroTrip2.Models.Registration", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<string>("EmailID")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Password")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Registrations");
                 });
 
             modelBuilder.Entity("EuroTrip2.Models.Seat", b =>
@@ -222,15 +272,15 @@ namespace EuroTrip2.Migrations
                     b.Property<int>("Flight_Id")
                         .HasColumnType("int");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<int>("PassengerCount")
                         .HasColumnType("int");
 
                     b.Property<int>("Price")
                         .HasColumnType("int");
+
+                    b.Property<string>("RouteName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("SourceTime")
                         .HasColumnType("datetime2");

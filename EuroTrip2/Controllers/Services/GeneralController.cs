@@ -97,7 +97,7 @@ namespace EuroTrip2.Controllers.Services
             return tripView;
             new one*/
             
-            var result = trip.Flight.Name.Split(' ');
+            var result = trip.Flight.flightName.Split(' ');
             tripView.Id = trip.Id;
             tripView.airlines = result[0];
             tripView.planeNo = result[1];
@@ -114,7 +114,7 @@ namespace EuroTrip2.Controllers.Services
             tripView.Duration = diff.Hours + " hours " + diff.Minutes + " mins";
 
             tripView.Price = trip.Price;
-            tripView.Name = trip.Name;
+            tripView.Name = trip.RouteName;
             tripView.stops = 0;
             tripView.SeatCount = trip.PassengerCount;
             return tripView;
@@ -152,7 +152,7 @@ namespace EuroTrip2.Controllers.Services
                     PhoneNo = booking.PhoneNo,
                     DateTime = booking.BookingDate.ToString("dd MMM yyyy"),
                     TripId = (int)booking.Trip_Id,
-                    TripName = booking.Trip.Name,
+                    TripName = booking.Trip.RouteName,
                     Source = GetLocation(booking.Trip.TripRoute.Source_Id),
                     Destination = GetLocation(booking.Trip.TripRoute.Destination_Id),
                     Status = (string)Enum.GetName(typeof(Options.BookingStatus), booking.Tickets.First().Status)

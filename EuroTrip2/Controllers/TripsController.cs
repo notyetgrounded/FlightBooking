@@ -24,71 +24,51 @@ namespace EuroTrip2.Controllers
 
         // GET: api/Trips
         [HttpGet]
-        public ActionResult<IEnumerable<AdminTripView>> GetTrips()
+        public async Task<IActionResult> GetTrip()
         {
-            var temp = _context.Trips;
-            if(!temp.Any())
-            {
-                return NoContent();
-            }
-            var trips = temp.Include(x => x.Flight).Include(x => x.TripRoute).ThenInclude(x => x.Destination).Include(x => x.TripRoute).ThenInclude(x => x.Source);
-            List<AdminTripView> result = new List<AdminTripView>();
-            foreach(var trip in trips)
-            {
-                AdminTripView tripView = new AdminTripView();
-                tripView.PassengerCount=trip.PassengerCount;
-                tripView.Price = trip.Price;
-                tripView.SourceTime = trip.SourceTime;
-                tripView.SourceName = trip.TripRoute.Source.Name;
-                tripView.SourceIOTA = trip.TripRoute.Source.IOTA;
-                tripView.DestinationName = trip.TripRoute.Destination.Name;
-                tripView.DestinationIOTA = trip.TripRoute.Destination.IOTA;
-                tripView.TripRoute_Id = trip.TripRoute_Id;
-                tripView.DestinationTime = trip.DestinationTime;
-                tripView.Id = trip.Id;
-                tripView.FlightId = trip.Flight_Id;
-                tripView.FlightName = trip.Flight.Name;
-                tripView.Name = trip.Name;
-                result.Add(tripView);
-            }
-            return result;
+            var trips = await _context.Trips.ToListAsync();
 
-            
+            return Ok(trips);
         }
 
         // GET: api/Trips/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Trip>> GetTrip(int id)
+        [HttpGet]
+        [Route("{Id:int}")]
+        //in the post method
+        public async Task<IActionResult> GetAllTrips([FromRoute] int Id)
         {
-            var trip = await _context.Trips.FindAsync(id);
+            var trips = await _context.Trips.FirstOrDefaultAsync(x => x.Id == Id);
 
-            if (trip == null)
+            if (trips == null)
             {
                 return NotFound();
             }
 
-            return trip;
+            return Ok(trips);
         }
 
         // PUT: api/Trips/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutTrip(int id, Trip trip)
+        [HttpPut]
+        [Route("{Id:int}")]
+        public async Task<IActionResult> UpdateTrip([FromRoute] int Id, Trip updateTripRequest)
         {
-            if (id != trip.Id)
+            var trip = await _context.Trips.FindAsync(Id);
+
+            if (trip == null || Id != trip.Id)
             {
-                return BadRequest();
+                return NotFound();
             }
-
-            _context.Entry(trip).State = EntityState.Modified;
-
+            trip.RouteName = updateTripRequest.RouteName;
+            trip.PassengerCount = updateTripRequest.PassengerCount;
             try
             {
                 await _context.SaveChangesAsync();
+
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!TripExists(id))
+                if (!TripExists(Id))
                 {
                     return NotFound();
                 }
@@ -97,59 +77,46 @@ namespace EuroTrip2.Controllers
                     throw;
                 }
             }
-
-            return NoContent();
+            return Ok(trip);
         }
 
         // POST: api/Trips
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Trip>> PostTrip(Trip trip)
+        public async Task<IActionResult> AddTrip([FromBody] Trip tripRequest)
         {
-            if (trip.PassengerCount == 0)
+            await _context.Trips.AddAsync(tripRequest);
+            if (tripRequest.PassengerCount == 0 || tripRequest.PassengerCount==null)
             {
-                trip.PassengerCount = _context.Flights.FirstOrDefault(x => x.Id == trip.Flight_Id).SeatCount;
+                tripRequest.PassengerCount = _context.Trips.FirstOrDefault(x => x.Id == tripRequest.Flight_Id).PassengerCount;
             }
-            int count = 0;
-            _context.Trips.Add(trip);
-            await _context.SaveChangesAsync();
-            foreach (var seat in _context.Seats.Where(x => x.Flight_Id == trip.Flight_Id))
-            {
-                if (count >= trip.PassengerCount)
-                {
-                    break;
-                }
-                SeatStatus seatStatus = new SeatStatus();
-                seatStatus.Seat_Id = seat.Id;
-                seatStatus.Trip_Id = trip.Id;
-                seatStatus.IsFree = true;
-                _context.Add(seatStatus);
-            }
-            await _context.SaveChangesAsync();
+            var flag = await _context.SaveChangesAsync();
 
-
-            return CreatedAtAction("GetTrip", new { id = trip.Id }, trip);
+            return CreatedAtAction("GetAllTrips", new { Id = tripRequest.Id }, tripRequest);
         }
 
         // DELETE: api/Trips/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteTrip(int id)
+        [HttpDelete]
+        [Route("{Id:int}")]
+        public async Task<IActionResult> DeleteTrip([FromRoute] int Id)
         {
-            var trip = await _context.Trips.FindAsync(id);
+            var trip = await _context.Trips.FindAsync(Id);
+
             if (trip == null)
             {
                 return NotFound();
             }
-
             _context.Trips.Remove(trip);
+
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return Ok(trip);
         }
 
-        private bool TripExists(int id)
+        private bool TripExists(int Id)
         {
-            return _context.Trips.Any(e => e.Id == id);
+            return _context.Trips.Any(e => e.Id == Id);
         }
     }
 }
+

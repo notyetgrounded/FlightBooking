@@ -19,6 +19,8 @@ namespace EuroTrip2.Contexts
         public DbSet<Ticket> Tickets { get; set; }
         public DbSet<SeatStatus> SeatStatuses { get; set; }
         public DbSet<Passenger> Passengers { get; set; }
+        public DbSet<Admin> Admins { get; set; }
+        public DbSet<Registration> Registrations { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
