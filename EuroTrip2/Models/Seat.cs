@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using EuroTrip2.ModelView;
+using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Runtime.Serialization;
@@ -19,8 +20,8 @@ namespace EuroTrip2.Models
         [ForeignKey("Flight_Id")]
         public Flight? Flight { get; set; }
 
-     
 
-        public ICollection<Booking>? Bookings { get; set; }
+        public ICollection<SeatStatus>? SeatStatuses { get; set; }
+        public ICollection<Ticket>? Tickets { get; set; }
     }
 }

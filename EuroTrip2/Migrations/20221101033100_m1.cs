@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace EuroTrip2.Migrations
 {
-    public partial class PriceToTrip : Migration
+    public partial class m1 : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -24,12 +24,28 @@ namespace EuroTrip2.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Passengers",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Age = table.Column<int>(type: "int", nullable: false),
+                    Gender = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Passengers", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Places",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    IOTA = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -129,24 +145,25 @@ namespace EuroTrip2.Migrations
                 name: "Bookings",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false),
-                    PassengerName = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    PassengerAge = table.Column<int>(type: "int", nullable: false),
-                    DateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Status = table.Column<int>(type: "int", nullable: false),
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    BookingDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    TotalPrice = table.Column<int>(type: "int", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    PhoneNo = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Trip_Id = table.Column<int>(type: "int", nullable: false),
                     User_Id = table.Column<int>(type: "int", nullable: false),
-                    Seat_Id = table.Column<int>(type: "int", nullable: false)
+                    NextBooking_Id = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Bookings", x => new { x.Id, x.PassengerName });
+                    table.PrimaryKey("PK_Bookings", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Bookings_Seats_Seat_Id",
-                        column: x => x.Seat_Id,
-                        principalTable: "Seats",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        name: "FK_Bookings_Bookings_NextBooking_Id",
+                        column: x => x.NextBooking_Id,
+                        principalTable: "Bookings",
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Bookings_Trips_Trip_Id",
                         column: x => x.Trip_Id,
@@ -161,10 +178,70 @@ namespace EuroTrip2.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "SeatStatuses",
+                columns: table => new
+                {
+                    Seat_Id = table.Column<int>(type: "int", nullable: false),
+                    Trip_Id = table.Column<int>(type: "int", nullable: false),
+                    IsFree = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SeatStatuses", x => new { x.Seat_Id, x.Trip_Id });
+                    table.ForeignKey(
+                        name: "FK_SeatStatuses_Seats_Seat_Id",
+                        column: x => x.Seat_Id,
+                        principalTable: "Seats",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_SeatStatuses_Trips_Trip_Id",
+                        column: x => x.Trip_Id,
+                        principalTable: "Trips",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Tickets",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Status = table.Column<int>(type: "int", nullable: false),
+                    Price = table.Column<int>(type: "int", nullable: false),
+                    Seat_Id = table.Column<int>(type: "int", nullable: false),
+                    Booking_Id = table.Column<int>(type: "int", nullable: false),
+                    Passenger_Id = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Tickets", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Tickets_Bookings_Booking_Id",
+                        column: x => x.Booking_Id,
+                        principalTable: "Bookings",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Tickets_Passengers_Passenger_Id",
+                        column: x => x.Passenger_Id,
+                        principalTable: "Passengers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Tickets_Seats_Seat_Id",
+                        column: x => x.Seat_Id,
+                        principalTable: "Seats",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.CreateIndex(
-                name: "IX_Bookings_Seat_Id",
+                name: "IX_Bookings_NextBooking_Id",
                 table: "Bookings",
-                column: "Seat_Id");
+                column: "NextBooking_Id",
+                unique: true,
+                filter: "[NextBooking_Id] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Bookings_Trip_Id",
@@ -180,6 +257,26 @@ namespace EuroTrip2.Migrations
                 name: "IX_Seats_Flight_Id",
                 table: "Seats",
                 column: "Flight_Id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SeatStatuses_Trip_Id",
+                table: "SeatStatuses",
+                column: "Trip_Id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Tickets_Booking_Id",
+                table: "Tickets",
+                column: "Booking_Id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Tickets_Passenger_Id",
+                table: "Tickets",
+                column: "Passenger_Id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Tickets_Seat_Id",
+                table: "Tickets",
+                column: "Seat_Id");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TripRoutes_Destination_Id",
@@ -205,7 +302,16 @@ namespace EuroTrip2.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
+                name: "SeatStatuses");
+
+            migrationBuilder.DropTable(
+                name: "Tickets");
+
+            migrationBuilder.DropTable(
                 name: "Bookings");
+
+            migrationBuilder.DropTable(
+                name: "Passengers");
 
             migrationBuilder.DropTable(
                 name: "Seats");

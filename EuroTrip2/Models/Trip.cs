@@ -35,5 +35,6 @@ namespace EuroTrip2.Models
 
 
         public ICollection<Booking>? Bookings { get; set; }
+        public ICollection<SeatStatus>? SeatStatuses { get; set; }
     }
 }

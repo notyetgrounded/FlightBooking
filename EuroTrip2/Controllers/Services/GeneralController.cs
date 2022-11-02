@@ -22,6 +22,14 @@ namespace EuroTrip2.Controllers.Services
         {
             return await _context.Places.ToListAsync();
         }
+        [HttpGet]
+        // new part 
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<TripRoute>>> GetTripRoutes()
+        {
+            return await _context.TripRoutes.ToListAsync();
+        }
+        //new part
 
         [HttpGet]
         [Route("{sourceId}/{destinationId}/{sourceTime}/{passengerCount}")]
@@ -87,9 +95,8 @@ namespace EuroTrip2.Controllers.Services
             tripView.Name = trip.Name;
             tripView.PassengerCount = trip.PassengerCount;
             return tripView;
-
             new one*/
-
+            
             var result = trip.Flight.Name.Split(' ');
             tripView.Id = trip.Id;
             tripView.airlines = result[0];
@@ -106,7 +113,6 @@ namespace EuroTrip2.Controllers.Services
             TimeSpan diff = (trip.DestinationTime - trip.SourceTime);
             tripView.Duration = diff.Hours + " hours " + diff.Minutes + " mins";
 
-
             tripView.Price = trip.Price;
             tripView.Name = trip.Name;
             tripView.stops = 0;
@@ -117,43 +123,63 @@ namespace EuroTrip2.Controllers.Services
         [HttpGet]
         [Route("{email}")]
         public ActionResult<IEnumerable<BookingsView>> GetMyBookings([FromRoute]string email)
-        {
-            
+        {            
             var userQueary=_context.Users.Where(x=>x.Email==email);
-            if (userQueary==null  )
+            if (userQueary==null)
             {
                 return NotFound();
             }
-            var user = userQueary.Include(x => x.Bookings).ThenInclude(x => x.Trip).ThenInclude(x => x.TripRoute).First();           
-            
-            
-            if (user.Bookings==null)
+            var user = userQueary.Include(x => x.Bookings).FirstOrDefault();
+            if (user== null)
             {
                 return NoContent();
             }
-            var records = user.Bookings;
-            List<BookingsView> bookings = new List<BookingsView>(); 
-            
-            foreach(var record in records)
+            var bookings = _context.Bookings.Where(x => x.User_Id == user.Id).Include(x => x.Trip).ThenInclude(x => x.TripRoute).Include(x => x.Tickets).ThenInclude(x => x.Passenger).Include(x => x.Tickets).ThenInclude(x => x.Seat);
+
+            List<BookingsView> bookingsViews = new List<BookingsView>();
+
+            foreach (var booking in bookings)
             {
+                if (booking.NextBooking != null || booking.FromBooking != null)
+                {
+                    continue;
+                }
                 BookingsView bookingsView = new BookingsView()
                 {
-                    BookingId = record.Id,
-                    PassengerName = record.PassengerName,
-                    PassengerAge = record.PassengerAge,
-                    PassengerGender = record.PassengerGender,
-                    DateTime = record.DateTime.ToString("dd MMM yyyy"),
-                    TripId = (int)record.Trip_Id,
-                    TripName = record.Trip.Name,
-                    Source = GetLocation(record.Trip.TripRoute.Source_Id),
-                    Destination = GetLocation(record.Trip.TripRoute.Destination_Id),
-                    Status = Enum.GetName(typeof(Options.BookingStatus),record.Status)
-
+                    BookingId = booking.Id,
+                    Name = booking.Name,
+                    Email = booking.Email,
+                    PhoneNo = booking.PhoneNo,
+                    DateTime = booking.BookingDate.ToString("dd MMM yyyy"),
+                    TripId = (int)booking.Trip_Id,
+                    TripName = booking.Trip.Name,
+                    Source = GetLocation(booking.Trip.TripRoute.Source_Id),
+                    Destination = GetLocation(booking.Trip.TripRoute.Destination_Id),
+                    Status = (string)Enum.GetName(typeof(Options.BookingStatus), booking.Tickets.First().Status)
                 };
-                
-                bookings.Add(bookingsView);
+                var passengers = new List<PassengerView>();
+                foreach (var ticket in booking.Tickets)
+                {
+                    PassengerView passenger = new PassengerView()
+                    {
+                        Name = ticket.Passenger.Name,
+                        Age = ticket.Passenger.Age,
+                        Gender = (string)Enum.GetName(typeof(Options.Gender), ticket.Passenger.Gender),
+                        TicketId = ticket.Id,
+                        Id = ticket.Passenger.Id,
+                        SeatName = ticket.Seat.Name,
+                        Price = ticket.Price,
+                        Status = (string)Enum.GetName(typeof(Options.BookingStatus),booking.Tickets.First().Status)
+
+                    };
+                    passengers.Add(passenger);
+                }
+                bookingsView.Passengers = passengers;
+
+
+                bookingsViews.Add(bookingsView);
             }
-            return bookings;
+            return bookingsViews;
         }
         [NonAction]
         public string GetLocation(int id)
@@ -161,50 +187,50 @@ namespace EuroTrip2.Controllers.Services
             return _context.Places.FirstOrDefault(x => x.Id == id).Name;
         }
 
-
-        [HttpGet]
-        public ActionResult<SeatsView> GetSeatStatusByTripId(int id )
-        {
-            var temp = _context.Trips.Where(x => x.Id == id);
-            if (!temp.Any())
-            {
-                return NotFound();
-            }
-            var trip = temp.Include(x => x.TripRoute).ThenInclude(x => x.Destination).Include(x => x.TripRoute).ThenInclude(x => x.Destination).Include(x=>x.TripRoute).ThenInclude(x=>x.Source).First();
-            var seats= _context.Seats.Where(x=>x.Flight_Id==trip.Flight_Id).ToList();
-            if (!seats.Any())
-            {
-                return NoContent();
-            }
-            var seatsView = new SeatsView();
-            seatsView.Price=trip.Price;
-            seatsView.TripName = trip.Name;
-            seatsView.TripId = trip.Id;
-            seatsView.Destination = trip.TripRoute.Destination.Name;
-            seatsView.DestinationIOTA = trip.TripRoute.Destination.IOTA;
-            seatsView.DestinationTime = trip.DestinationTime;
-            seatsView.Source = trip.TripRoute.Source.Name;
-            seatsView.SourceIOTA = trip.TripRoute.Source.IOTA;
-            seatsView.SourceTime = trip.SourceTime;
+        
+        //[HttpGet]
+        //public ActionResult<SeatsView> GetSeatStatusByTripId(int id )
+        //{
+        //    var temp = _context.Trips.Where(x => x.Id == id);
+        //    if (!temp.Any())
+        //    {
+        //        return NotFound();
+        //    }
+        //    var trip = temp.Include(x => x.TripRoute).ThenInclude(x => x.Destination).Include(x => x.TripRoute).ThenInclude(x => x.Destination).Include(x=>x.TripRoute).ThenInclude(x=>x.Source).First();
+        //    var seats= _context.Seats.Where(x=>x.Flight_Id==trip.Flight_Id).ToList();
+        //    if (!seats.Any())
+        //    {
+        //        return NoContent();
+        //    }
+        //    var seatsView = new SeatsView();
+        //    seatsView.Price=trip.Price;
+        //    seatsView.TripName = trip.Name;
+        //    seatsView.TripId = trip.Id;
+        //    seatsView.Destination = trip.TripRoute.Destination.Name;
+        //    seatsView.DestinationIOTA = trip.TripRoute.Destination.IOTA;
+        //    seatsView.DestinationTime = trip.DestinationTime;
+        //    seatsView.Source = trip.TripRoute.Source.Name;
+        //    seatsView.SourceIOTA = trip.TripRoute.Source.IOTA;
+        //    seatsView.SourceTime = trip.SourceTime;
             
-            var seatStatusList = new List<SeatStatus>();
+        //    var seatStatusList = new List<SeatStatus>();
             
-            var bookedSeatsIds= _context.Bookings.Where(x=>x.Trip_Id==trip.Id && (x.Status==(int)BookingStatus.Booked || x.Status== (int)BookingStatus.Pending)).Select(x=>x.Id).ToList();
-            foreach(var seat in seats)
-            {
-                var seatStatus = new SeatStatus();
-                seatStatus.SeatName=seat.Name; 
-                seatStatus.SeatId= seat.Id;
-                seatStatus.Status = true;
-                if (bookedSeatsIds.Contains(seat.Id))
-                {
-                    seatStatus.Status = false;
-                }
-                seatStatusList.Add(seatStatus);
-            }
-            seatsView.Seats=seatStatusList;
-            return seatsView;
-        }
+        //    var bookedSeatsIds= _context.Bookings.Where(x=>x.Trip_Id==trip.Id && (x.Status==(int)BookingStatus.Booked || x.Status== (int)BookingStatus.Pending)).Select(x=>x.Id).ToList();
+        //    foreach(var seat in seats)
+        //    {
+        //        var seatStatus = new SeatStatus();
+        //        seatStatus.SeatName=seat.Name; 
+        //        seatStatus.SeatId= seat.Id;
+        //        seatStatus.Status = true;
+        //        if (bookedSeatsIds.Contains(seat.Id))
+        //        {
+        //            seatStatus.Status = false;
+        //        }
+        //        seatStatusList.Add(seatStatus);
+        //    }
+        //    seatsView.Seats=seatStatusList;
+        //    return seatsView;
+        //}
 
     }
 }

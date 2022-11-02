@@ -1,5 +1,7 @@
 ﻿using EuroTrip2.Options;
+
 using Newtonsoft.Json;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Runtime.Serialization;
 
@@ -7,12 +9,15 @@ namespace EuroTrip2.Models
 {
     public class Booking
     {
+        [Key]
         public int Id { get; set; }
-        public string PassengerName { get; set; }
-        public int PassengerAge { get; set; }
-        public short PassengerGender { get; set; } = (int)Gender.Others;
-        public DateTime DateTime { get; set; }=DateTime.Now;
-        public int Status { get; set; }
+        public DateTime BookingDate { get; set; } = DateTime.Now;
+
+        public int TotalPrice { get; set; }
+
+        public string Name { get; set; }
+        public string Email { get; set; }
+        public string PhoneNo { get; set; }
 
 
         public int Trip_Id { get; set; }
@@ -30,12 +35,15 @@ namespace EuroTrip2.Models
         public User? User { get; set; }
 
 
-        public int Seat_Id { get; set; }
+        public ICollection<Ticket>? Tickets { get; set; }
 
+        public int? NextBooking_Id { get; set; }
 
+        [ForeignKey("NextBooking_Id")]
+        public Booking? NextBooking { get; set; }
 
-        [ForeignKey("Seat_Id")]
-        public Seat? Seat { get; set; }
+        public Booking? FromBooking { get; set; }
+
 
     }
 }

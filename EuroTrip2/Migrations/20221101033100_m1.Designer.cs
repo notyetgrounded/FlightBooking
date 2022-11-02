@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EuroTrip2.Migrations
 {
     [DbContext(typeof(FlightDBContext))]
-    [Migration("20221026160405_addIOTA")]
-    partial class addIOTA
+    [Migration("20221101033100_m1")]
+    partial class m1
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -27,21 +27,30 @@ namespace EuroTrip2.Migrations
             modelBuilder.Entity("EuroTrip2.Models.Booking", b =>
                 {
                     b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<string>("PassengerName")
-                        .HasColumnType("nvarchar(450)");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
-                    b.Property<DateTime>("DateTime")
+                    b.Property<DateTime>("BookingDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("PassengerAge")
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("NextBooking_Id")
                         .HasColumnType("int");
 
-                    b.Property<int>("Seat_Id")
-                        .HasColumnType("int");
+                    b.Property<string>("PhoneNo")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("Status")
+                    b.Property<int>("TotalPrice")
                         .HasColumnType("int");
 
                     b.Property<int>("Trip_Id")
@@ -50,9 +59,11 @@ namespace EuroTrip2.Migrations
                     b.Property<int>("User_Id")
                         .HasColumnType("int");
 
-                    b.HasKey("Id", "PassengerName");
+                    b.HasKey("Id");
 
-                    b.HasIndex("Seat_Id");
+                    b.HasIndex("NextBooking_Id")
+                        .IsUnique()
+                        .HasFilter("[NextBooking_Id] IS NOT NULL");
 
                     b.HasIndex("Trip_Id");
 
@@ -79,6 +90,29 @@ namespace EuroTrip2.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Flights");
+                });
+
+            modelBuilder.Entity("EuroTrip2.Models.Passenger", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<int>("Age")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Gender")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Passengers");
                 });
 
             modelBuilder.Entity("EuroTrip2.Models.Place", b =>
@@ -122,6 +156,58 @@ namespace EuroTrip2.Migrations
                     b.HasIndex("Flight_Id");
 
                     b.ToTable("Seats");
+                });
+
+            modelBuilder.Entity("EuroTrip2.Models.SeatStatus", b =>
+                {
+                    b.Property<int>("Seat_Id")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Trip_Id")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsFree")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Seat_Id", "Trip_Id");
+
+                    b.HasIndex("Trip_Id");
+
+                    b.ToTable("SeatStatuses");
+                });
+
+            modelBuilder.Entity("EuroTrip2.Models.Ticket", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<int>("Booking_Id")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Passenger_Id")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Price")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Seat_Id")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Booking_Id");
+
+                    b.HasIndex("Passenger_Id");
+
+                    b.HasIndex("Seat_Id");
+
+                    b.ToTable("Tickets");
                 });
 
             modelBuilder.Entity("EuroTrip2.Models.Trip", b =>
@@ -212,11 +298,9 @@ namespace EuroTrip2.Migrations
 
             modelBuilder.Entity("EuroTrip2.Models.Booking", b =>
                 {
-                    b.HasOne("EuroTrip2.Models.Seat", "Seat")
-                        .WithMany("Bookings")
-                        .HasForeignKey("Seat_Id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.HasOne("EuroTrip2.Models.Booking", "FromBooking")
+                        .WithOne("NextBooking")
+                        .HasForeignKey("EuroTrip2.Models.Booking", "NextBooking_Id");
 
                     b.HasOne("EuroTrip2.Models.Trip", "Trip")
                         .WithMany("Bookings")
@@ -230,7 +314,7 @@ namespace EuroTrip2.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Seat");
+                    b.Navigation("FromBooking");
 
                     b.Navigation("Trip");
 
@@ -246,6 +330,52 @@ namespace EuroTrip2.Migrations
                         .IsRequired();
 
                     b.Navigation("Flight");
+                });
+
+            modelBuilder.Entity("EuroTrip2.Models.SeatStatus", b =>
+                {
+                    b.HasOne("EuroTrip2.Models.Seat", "Seat")
+                        .WithMany("SeatStatuses")
+                        .HasForeignKey("Seat_Id")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("EuroTrip2.Models.Trip", "Trip")
+                        .WithMany("SeatStatuses")
+                        .HasForeignKey("Trip_Id")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Seat");
+
+                    b.Navigation("Trip");
+                });
+
+            modelBuilder.Entity("EuroTrip2.Models.Ticket", b =>
+                {
+                    b.HasOne("EuroTrip2.Models.Booking", "Booking")
+                        .WithMany("Tickets")
+                        .HasForeignKey("Booking_Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("EuroTrip2.Models.Passenger", "Passenger")
+                        .WithMany("Tickets")
+                        .HasForeignKey("Passenger_Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("EuroTrip2.Models.Seat", "Seat")
+                        .WithMany("Tickets")
+                        .HasForeignKey("Seat_Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Booking");
+
+                    b.Navigation("Passenger");
+
+                    b.Navigation("Seat");
                 });
 
             modelBuilder.Entity("EuroTrip2.Models.Trip", b =>
@@ -286,11 +416,23 @@ namespace EuroTrip2.Migrations
                     b.Navigation("Source");
                 });
 
+            modelBuilder.Entity("EuroTrip2.Models.Booking", b =>
+                {
+                    b.Navigation("NextBooking");
+
+                    b.Navigation("Tickets");
+                });
+
             modelBuilder.Entity("EuroTrip2.Models.Flight", b =>
                 {
                     b.Navigation("Seats");
 
                     b.Navigation("Trips");
+                });
+
+            modelBuilder.Entity("EuroTrip2.Models.Passenger", b =>
+                {
+                    b.Navigation("Tickets");
                 });
 
             modelBuilder.Entity("EuroTrip2.Models.Place", b =>
@@ -302,12 +444,16 @@ namespace EuroTrip2.Migrations
 
             modelBuilder.Entity("EuroTrip2.Models.Seat", b =>
                 {
-                    b.Navigation("Bookings");
+                    b.Navigation("SeatStatuses");
+
+                    b.Navigation("Tickets");
                 });
 
             modelBuilder.Entity("EuroTrip2.Models.Trip", b =>
                 {
                     b.Navigation("Bookings");
+
+                    b.Navigation("SeatStatuses");
                 });
 
             modelBuilder.Entity("EuroTrip2.Models.TripRoute", b =>
