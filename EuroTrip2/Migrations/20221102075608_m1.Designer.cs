@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EuroTrip2.Migrations
 {
     [DbContext(typeof(FlightDBContext))]
-    [Migration("20221102054537_m1")]
+    [Migration("20221102075608_m1")]
     partial class m1
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

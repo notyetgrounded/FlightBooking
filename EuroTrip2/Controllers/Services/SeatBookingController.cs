@@ -47,7 +47,8 @@ namespace EuroTrip2.Controllers.Services
             foreach (var tripId in makeBooking.TripIds)
             {
                 var FreeSeats = GetFreeSeats(tripId, makeBooking.Passengers.Count());
-                if (FreeSeats.Count() < makeBooking.Passengers.Count()) { return NotFound(); }
+                var ij = FreeSeats.Count();
+                if (FreeSeats.Count() < makeBooking.Passengers.Count()) { return NotFound("here"+ij); }
                 Trip trip = _context.Trips.Include(x => x.SeatStatuses).Where(x => x.Id == tripId).FirstOrDefault();
                 Booking booking = new Booking();
 

@@ -59,7 +59,7 @@ namespace EuroTrip2.Controllers
             {
                 return NotFound();
             }
-            trip.RouteName = updateTripRequest.RouteName;
+            trip.TripRoute_Id = updateTripRequest.TripRoute_Id;
             trip.PassengerCount = updateTripRequest.PassengerCount;
             try
             {
@@ -85,12 +85,26 @@ namespace EuroTrip2.Controllers
         [HttpPost]
         public async Task<IActionResult> AddTrip([FromBody] Trip tripRequest)
         {
-            await _context.Trips.AddAsync(tripRequest);
-            if (tripRequest.PassengerCount == 0 || tripRequest.PassengerCount==null)
+            if (tripRequest.PassengerCount == 0)
             {
-                tripRequest.PassengerCount = _context.Trips.FirstOrDefault(x => x.Id == tripRequest.Flight_Id).PassengerCount;
+                tripRequest.PassengerCount = _context.Flights.FirstOrDefault(x => x.flightId == tripRequest.Flight_Id).seatCount;
             }
-            var flag = await _context.SaveChangesAsync();
+            int count = 0;
+            _context.Trips.Add(tripRequest);
+            await _context.SaveChangesAsync();
+            foreach (var seat in _context.Seats.Where(x => x.Flight_Id == tripRequest.Flight_Id))
+            {
+                if (count >= tripRequest.PassengerCount)
+                {
+                    break;
+                }
+                SeatStatus seatStatus = new SeatStatus();
+                seatStatus.Seat_Id = seat.Id;
+                seatStatus.Trip_Id = tripRequest.Id;
+                seatStatus.IsFree = true;
+                _context.Add(seatStatus);
+            }
+            await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetAllTrips", new { Id = tripRequest.Id }, tripRequest);
         }
