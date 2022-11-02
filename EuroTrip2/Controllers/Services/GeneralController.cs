@@ -35,11 +35,12 @@ namespace EuroTrip2.Controllers.Services
         [Route("{sourceId}/{destinationId}/{sourceTime}/{passengerCount}")]
         public ActionResult<IEnumerable<TripView>> GetTrips([FromRoute]int sourceId, int destinationId,DateTime sourceTime,int passengerCount)
         {
-            var tripRoute=_context.TripRoutes.Where(x=>x.Source_Id==sourceId && x.Destination_Id==destinationId);
-            //if (tripRoute == null)
-            //{ return NoContent(); }
-                var gap = 0;
             List<TripView> completeTrips = new List<TripView>();
+            var tripRoute=_context.TripRoutes.Where(x=>x.Source_Id==sourceId && x.Destination_Id==destinationId);
+            if (tripRoute == null)
+            { return NoContent(); }
+            var gap = 0;
+            
             foreach (var route in tripRoute)
             {
                 var directTripIds = _context.Trips.Where(x => x.TripRoute.Id == route.Id && x.PassengerCount >= passengerCount && x.SourceTime.Date== sourceTime.Date ).Select(x => x.Id).ToList();
@@ -47,7 +48,7 @@ namespace EuroTrip2.Controllers.Services
                 foreach (var tripId in directTripIds)
                 {
                     var completeTrip = new TripView();
-                    completeTrip= FillTripView(tripId,_context) ;
+                    completeTrip= FillTripView(tripId) ;
                     completeTrips.Add(completeTrip);
                 }
             }
@@ -73,9 +74,9 @@ namespace EuroTrip2.Controllers.Services
 
         }
         [NonAction]
-        static public TripView FillTripView(int id,FlightDBContext dBContext)
+        public TripView FillTripView(int id)
         {
-            var trip = dBContext.Trips.Include(x => x.TripRoute).ThenInclude(x => x.Source).Include(x => x.TripRoute).ThenInclude(x => x.Destination).Include(x => x.Flight).Where(x=>x.Id==id).SingleOrDefault();
+            var trip = _context.Trips.Include(x => x.TripRoute).ThenInclude(x => x.Source).Include(x => x.TripRoute).ThenInclude(x => x.Destination).Include(x => x.Flight).Where(x=>x.Id==id).SingleOrDefault();
            
             TripView tripView = new TripView();
             if (trip == null)
@@ -123,20 +124,21 @@ namespace EuroTrip2.Controllers.Services
         [HttpGet]
         [Route("{email}")]
         public ActionResult<IEnumerable<BookingsView>> GetMyBookings([FromRoute]string email)
-        {            
+        {
+            List<BookingsView> bookingsViews = new List<BookingsView>();
             var userQueary=_context.Users.Where(x=>x.Email==email);
             if (userQueary==null)
             {
-                return NotFound();
+                return bookingsViews;
             }
             var user = userQueary.Include(x => x.Bookings).FirstOrDefault();
             if (user== null)
             {
-                return NoContent();
+                return bookingsViews;
             }
             var bookings = _context.Bookings.Where(x => x.User_Id == user.Id).Include(x => x.Trip).ThenInclude(x => x.TripRoute).Include(x => x.Tickets).ThenInclude(x => x.Passenger).Include(x => x.Tickets).ThenInclude(x => x.Seat);
 
-            List<BookingsView> bookingsViews = new List<BookingsView>();
+            
 
             foreach (var booking in bookings)
             {
