@@ -9,6 +9,7 @@ namespace EuroTrip2.Models
         public string UserName { get; set; }
         public string EmailID { get; set; }
         public string Password { get; set; }
+        public Registration() { }
         public Registration(int id, string userName, string emailID, string password)
         {
             Id = id;

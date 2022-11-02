@@ -7,7 +7,7 @@ using System.Security.Policy;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
 using Microsoft.JSInterop;
-
+using Microsoft.AspNetCore.Authorization;
 
 namespace EuroTrip2.Controllers.Services
 {
@@ -23,7 +23,7 @@ namespace EuroTrip2.Controllers.Services
             _context = context;
         }
         [HttpPost]
-
+        [Authorize]
         public async Task<ActionResult<HttpResponseMessage>> BookSeats(MakeBookingView makeBooking)
         {
             if(!ModelState.IsValid)
@@ -102,6 +102,7 @@ namespace EuroTrip2.Controllers.Services
         }
         [HttpDelete]
         [Route("{booking_Id}")]
+        [Authorize]
         public async Task<ActionResult<HttpResponseMessage>> CancelBookings([FromRoute]int booking_Id)
         {
 
