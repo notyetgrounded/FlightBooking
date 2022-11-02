@@ -8,10 +8,12 @@ using Microsoft.EntityFrameworkCore;
 using System.Net;
 using Microsoft.JSInterop;
 
+
 namespace EuroTrip2.Controllers.Services
 {
     [Route("api/[controller]/[action]")]
     [ApiController]
+    [System.Web.Http.Authorize]
     public class SeatBookingController : ControllerBase
     {
         protected readonly FlightDBContext _context;
@@ -24,15 +26,20 @@ namespace EuroTrip2.Controllers.Services
 
         public async Task<ActionResult<HttpResponseMessage>> BookSeats(MakeBookingView makeBooking)
         {
-            User user;
-
-            //
-            if (!_context.Users.Any()) { user = new User() { Email = "User1@gmail.com", Name = "User1" }; _context.Users.Add(user); _context.SaveChanges(); }
-            else { user = _context.Users.First(); }
-            //need to be changes
-            if (!ModelState.IsValid)
+            if(!ModelState.IsValid)
             {
-                return NotFound();
+                return BadRequest(ModelState);
+            }
+            User user = _context.Users.Where(x => x.Email == makeBooking.Email).FirstOrDefault();
+            if(user==null)
+            {
+                user = new User()
+                {
+                    Email = makeBooking.Email,
+                    Name = makeBooking.Name
+                };
+                _context.Users.Add(user);
+                _context.SaveChanges();
             }
             List<Passenger> passengers = new List<Passenger>();
             foreach (var passenger in makeBooking.Passengers)
@@ -96,7 +103,12 @@ namespace EuroTrip2.Controllers.Services
         [Route("{booking_Id}")]
         public async Task<ActionResult<HttpResponseMessage>> CancelBookings([FromRoute]int booking_Id)
         {
+
             var booking = _context.Bookings.Include(x => x.Trip).ThenInclude(x => x.SeatStatuses).Include(x => x.Tickets).Where(x => x.Id == booking_Id).FirstOrDefault();
+            if(booking == null)
+            {
+                return BadRequest("that booking id does not exist ");
+            }
 
             foreach (var ticket in booking.Tickets)
             {
@@ -111,7 +123,10 @@ namespace EuroTrip2.Controllers.Services
         [HttpPut]
         public async Task<ActionResult<HttpResponseMessage>> UpdatePassengers(List<Passenger> passengers)
         {
-
+            if(!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
             _context.Passengers.UpdateRange(passengers);
             await _context.SaveChangesAsync();
             return Ok("Updated passengers");

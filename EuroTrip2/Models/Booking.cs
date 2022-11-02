@@ -11,6 +11,8 @@ namespace EuroTrip2.Models
     {
         [Key]
         public int Id { get; set; }
+
+       
         public DateTime BookingDate { get; set; } = DateTime.Now;
 
         public int TotalPrice { get; set; }
