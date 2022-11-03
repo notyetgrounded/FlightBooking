@@ -33,7 +33,7 @@ namespace EuroTrip2.Controllers.Services
             }
             if (_bookingRepository.BookSeats(makeBooking).Result)
             {
-                _bookingRepository
+              
                 return Ok();
             }
             ModelState.AddModelError("Internal_Error", "Somthing Went Wrong Please Try again");

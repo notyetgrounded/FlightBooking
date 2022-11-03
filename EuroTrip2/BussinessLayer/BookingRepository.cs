@@ -73,6 +73,7 @@ namespace EuroTrip2.BussinessLayer
                     trip.SeatStatuses.Where(x => x.Seat_Id == FreeSeats[i]).FirstOrDefault().IsFree = false;
 
                 }
+                IncrementPrice(tripId, 10, 10);
             }
             await _context.SaveChangesAsync();
             return true;
@@ -134,10 +135,12 @@ namespace EuroTrip2.BussinessLayer
             var seatsIds = _context.SeatStatuses.Where(x => x.Trip_Id == trip_Id && x.IsFree == true).Select(x => x.Seat_Id).Take(count).ToList();
             return seatsIds;
         }
-        public async Task<bool> IncremntPrice(int trip_Id,int Percentage,int Change)
+
+      
+        public async Task<bool> IncrementPrice(int trip_Id,int Percentage,int Change)
         {
             var trip = _context.Trips.Find(trip_Id);
-            if(trip==null || trip.PassengerCount%10>0)
+            if(trip==null || trip.PassengerCount%Change>0)
             {
                 return false;
             }
