@@ -3,6 +3,7 @@ using EuroTrip2.Contexts;
 using EuroTrip2.Models;
 using EuroTrip2.ModelView;
 using EuroTrip2.Options;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
@@ -37,6 +38,7 @@ namespace EuroTrip2.Controllers.Services
 
         [HttpGet]
         [Route("{sourceId}/{destinationId}/{sourceTime}/{passengerCount}")]
+        [Authorize]
         public ActionResult<IEnumerable<TripView>> GetTrips([FromRoute]int sourceId, int destinationId,DateTime sourceTime,int passengerCount)
         {
             var res = _generalRepository.GetTrips(sourceId, destinationId, sourceTime, passengerCount);
@@ -52,6 +54,7 @@ namespace EuroTrip2.Controllers.Services
 
         [HttpGet]
         [Route("{email}")]
+        [Authorize]
         public ActionResult<IEnumerable<BookingsView>> GetMyBookings([FromRoute]string email)
         {
             var res = _generalRepository.GetMyBookings(email);

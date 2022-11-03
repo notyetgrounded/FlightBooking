@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using EuroTrip2.Contexts;
 using EuroTrip2.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Options;
 
 namespace EuroTrip2.Controllers
 {
@@ -19,6 +20,7 @@ namespace EuroTrip2.Controllers
 
         // GET: api/Flights
         [HttpGet]
+
         public async Task<IActionResult> GetAllFlights()
         {
             var flights = await _context.Flights.ToListAsync();

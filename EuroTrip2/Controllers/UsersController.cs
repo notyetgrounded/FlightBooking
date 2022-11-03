@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using EuroTrip2.Contexts;
 using EuroTrip2.Models;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 
 namespace EuroTrip2.Controllers
 {
@@ -23,6 +25,7 @@ namespace EuroTrip2.Controllers
 
         // GET: api/Users
         [HttpGet]
+        [Authorize]
         public async Task<ActionResult<IEnumerable<User>>> GetUsers()
         {
             return await _context.Users.ToListAsync();
@@ -30,6 +33,7 @@ namespace EuroTrip2.Controllers
 
         // GET: api/Users/5
         [HttpGet("{id}")]
+        [Authorize]
         public async Task<ActionResult<User>> GetUser(int id)
         {
             var user = await _context.Users.FindAsync(id);
@@ -104,5 +108,6 @@ namespace EuroTrip2.Controllers
         {
             return _context.Users.Any(e => e.Id == id);
         }
-    }
+
+     }
 }
