@@ -20,7 +20,7 @@ namespace EuroTrip2.Controllers
 
         // GET: api/Flights
         [HttpGet]
-
+        [Authorize]
         public async Task<IActionResult> GetAllFlights()
         {
             var flights = await _context.Flights.ToListAsync();
@@ -31,6 +31,7 @@ namespace EuroTrip2.Controllers
         // GET: api/Flights/5
         [HttpGet]
         [Route("{flightId:int}")]
+        [Authorize]
         public async Task<IActionResult> GetFlight([FromRoute] int flightId)
         {
             var flight = await _context.Flights.FirstOrDefaultAsync(x => x.flightId == flightId);
@@ -47,6 +48,7 @@ namespace EuroTrip2.Controllers
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut]
         [Route("{flightId:int}")]
+        [Authorize]
         public async Task<IActionResult> UpdateFlight([FromRoute] int flightId, Flight updateFlightRequest)
         {
             var flight = await _context.Flights.FindAsync(flightId);
@@ -80,6 +82,7 @@ namespace EuroTrip2.Controllers
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
 
         [HttpPost]
+        [Authorize]
         public async Task<IActionResult> AddFlight([FromBody] Flight flightRequest)
         {
             await _context.Flights.AddAsync(flightRequest);
@@ -105,6 +108,7 @@ namespace EuroTrip2.Controllers
         // DELETE: api/Flights/5
         [HttpDelete]
         [Route("{flightId:int}")]
+        [Authorize]
         public async Task<IActionResult> DeleteFlight([FromRoute] int flightId)
         {
             var flight = await _context.Flights.FindAsync(flightId);

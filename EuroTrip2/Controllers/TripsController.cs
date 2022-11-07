@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using EuroTrip2.Contexts;
 using EuroTrip2.Models;
 using EuroTrip2.ModelView;
+using Microsoft.AspNetCore.Authorization;
 
 namespace EuroTrip2.Controllers
 {
@@ -24,6 +25,7 @@ namespace EuroTrip2.Controllers
 
         // GET: api/Trips
         [HttpGet]
+        [Authorize]
         public async Task<IActionResult> GetTrip()
         {
             var trips = await _context.Trips.ToListAsync();
@@ -51,6 +53,7 @@ namespace EuroTrip2.Controllers
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut]
         [Route("{Id:int}")]
+        [Authorize]
         public async Task<IActionResult> UpdateTrip([FromRoute] int Id, Trip updateTripRequest)
         {
             var trip = await _context.Trips.FindAsync(Id);
@@ -83,6 +86,7 @@ namespace EuroTrip2.Controllers
         // POST: api/Trips
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
+        [Authorize]
         public async Task<IActionResult> AddTrip([FromBody] Trip tripRequest)
         {
             if (tripRequest.PassengerCount == 0)
@@ -112,6 +116,7 @@ namespace EuroTrip2.Controllers
         // DELETE: api/Trips/5
         [HttpDelete]
         [Route("{Id:int}")]
+        [Authorize]
         public async Task<IActionResult> DeleteTrip([FromRoute] int Id)
         {
             var trip = await _context.Trips.FindAsync(Id);

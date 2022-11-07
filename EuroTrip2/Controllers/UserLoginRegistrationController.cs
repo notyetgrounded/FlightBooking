@@ -68,10 +68,11 @@ namespace EuroTrip2.Controllers
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["jwtConfig:Key"]));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-
             var claims = new[]
             {
-                new Claim(ClaimTypes.Email,user.EmailID)
+
+                new Claim("EmailID",user.EmailID),
+                new Claim("Password",user.Password)
             };
 
             var access_token = new JwtSecurityToken(_configuration["jwtConfig:Issuer"],

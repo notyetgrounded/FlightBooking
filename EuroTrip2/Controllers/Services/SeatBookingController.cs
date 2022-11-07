@@ -8,12 +8,13 @@ using Microsoft.EntityFrameworkCore;
 using System.Net;
 using Microsoft.JSInterop;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
 
 namespace EuroTrip2.Controllers.Services
 {
     [Route("api/[controller]/[action]")]
     [ApiController]
-    [System.Web.Http.Authorize]
+
     public class SeatBookingController : ControllerBase
     {
         protected readonly FlightDBContext _context;
@@ -23,7 +24,6 @@ namespace EuroTrip2.Controllers.Services
             _context = context;
         }
         [HttpPost]
-        [Authorize]
         public async Task<ActionResult<HttpResponseMessage>> BookSeats(MakeBookingView makeBooking)
         {
             if(!ModelState.IsValid)
@@ -55,7 +55,7 @@ namespace EuroTrip2.Controllers.Services
             {
                 var FreeSeats = GetFreeSeats(tripId, makeBooking.Passengers.Count());
                 var ij = FreeSeats.Count();
-                if (FreeSeats.Count() < makeBooking.Passengers.Count()) { return NotFound("here"+ij); }
+                if (FreeSeats.Count() < makeBooking.Passengers.Count()) { return NotFound(); }
                 Trip trip = _context.Trips.Include(x => x.SeatStatuses).Where(x => x.Id == tripId).FirstOrDefault();
                 Booking booking = new Booking();
 
@@ -81,10 +81,18 @@ namespace EuroTrip2.Controllers.Services
                     trip.SeatStatuses.Where(x => x.Seat_Id == FreeSeats[i]).FirstOrDefault().IsFree = false;
 
                 }
+                IncrementPrice(tripId);
             }
             await _context.SaveChangesAsync();
             return Ok();
 
+        }
+        [NonAction]
+        public  void IncrementPrice(int trip_Id)
+        {
+            var trip = _context.Trips.Find(trip_Id);
+            trip.Price = (int)(trip.Price + trip.Price * 0.02);
+            
         }
         [NonAction]
         public bool makeTicket(int seat_Id, int booking_Id, int passenger_id, int price)
@@ -102,7 +110,6 @@ namespace EuroTrip2.Controllers.Services
         }
         [HttpDelete]
         [Route("{booking_Id}")]
-        [Authorize]
         public async Task<ActionResult<HttpResponseMessage>> CancelBookings([FromRoute]int booking_Id)
         {
 
