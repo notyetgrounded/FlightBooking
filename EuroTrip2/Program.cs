@@ -1,6 +1,7 @@
 using EuroTrip2.Contexts;
 using Microsoft.EntityFrameworkCore;
 using EuroTrip2.Controllers;
+using EuroTrip2.BussinessLayer;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -34,6 +35,7 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
 builder.Services.AddDbContextPool<FlightDBContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddCors();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
@@ -55,6 +57,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
 
 builder.Services.AddRazorPages();
 builder.Services.AddMvc();
+builder.Services.AddScoped<IBookingInterface,BookingRepository>();
+builder.Services.AddScoped<IGeneralInterface,GeneralRepository>();
 var app = builder.Build();
 
 
